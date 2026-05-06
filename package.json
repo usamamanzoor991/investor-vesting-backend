@@ -1,0 +1,29 @@
+{
+  "name": "investor-vesting-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/usamamanzoor991/investor-vesting-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/usamamanzoor991/investor-vesting-backend/issues"
+  },
+  "homepage": "https://github.com/usamamanzoor991/investor-vesting-backend#readme"
+}
