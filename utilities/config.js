@@ -1,5 +1,5 @@
 const config = {
-  BALANCE_THRESHOLD: 10,
+  BALANCE_THRESHOLD: 0.1,
   CRON_INTERVAL: "*/60 * * * * *",
 };
 

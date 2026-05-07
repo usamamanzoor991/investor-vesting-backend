@@ -11,6 +11,7 @@ import logger from "../utilities/logger.js";
 let cronTask = null;
 let isRunning = false;
 let cycleStart;
+let globalConfig;
 
 const metrics = {
   cyclesRun: 0,
@@ -67,7 +68,6 @@ async function runTransferCycle() {
     }
 
     // ── GlobalConfig ──────────────────────────────────────────────────
-    let globalConfig;
     try {
       globalConfig = await program.account.globalConfig.fetch(configPda);
       console.log("[Keeper] Global Config:", {
@@ -111,6 +111,9 @@ async function runTransferCycle() {
       return;
     }
 
+    let tokensDistributed = 0;
+    let tokensAllocated = 0;
+
     for (const { publicKey, account } of allInvestors) {
       const label = Buffer.from(
         account.label.slice(0, account.labelLen),
@@ -126,6 +129,16 @@ async function runTransferCycle() {
         claimedAmount: account.claimedAmount.toString(),
         periodsClaimed: account.periodsClaimed,
       });
+
+      tokensDistributed += Number(account.claimedAmount);
+      tokensAllocated += Number(account.totalAllocation);
+
+      globalConfig = {
+        ...globalConfig,
+        tokensDistributed: tokensDistributed.toString(),
+        tokensAllocated: tokensAllocated.toString(),
+      }
+
 
       // TODO: call distribute instruction per investor here
     }
@@ -187,7 +200,6 @@ function startCron() {
   setupGracefulShutdown();
 
   cronTask = cron.schedule(config.CRON_INTERVAL, async () => {
-    console.log("[Keeper] Cron triggered");
     await runTransferCycle();
   });
 
@@ -218,6 +230,11 @@ const transferController = {
       metrics,
     });
   },
+
+  async globalData(req, res) {
+    return res.json({ success: true, data: globalConfig });
+  }
+
 };
 
 export default transferController;
