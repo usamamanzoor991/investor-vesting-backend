@@ -1,1 +1,3 @@
 GET http://localhost:3000/transfer-funds
+###
+GET http://localhost:3000/health
