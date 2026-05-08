@@ -13,6 +13,12 @@ let isRunning = false;
 let cycleStart;
 let globalConfig;
 
+//// Required in add Investor
+let idl;
+let connection;
+let program;
+let configPda;
+
 const metrics = {
   cyclesRun: 0,
   lastCycleAt: null,
@@ -37,7 +43,7 @@ async function runTransferCycle() {
   console.log(`[Keeper] Cycle started at ${new Date().toISOString()}`);
 
   try {
-    const connection = new Connection(process.env.SOLANA_RPC_URL, "confirmed");
+    connection = new Connection(process.env.SOLANA_RPC_URL, "confirmed");
     const caller = Keypair.fromSecretKey(
       bs58.decode(process.env.CALLER_PRIVATE_KEY),
     );
@@ -47,15 +53,17 @@ async function runTransferCycle() {
     });
     anchor.setProvider(provider);
 
-    const idl = await Program.fetchIdl(process.env.PROGRAM_ID, provider);
+    idl = await Program.fetchIdl(process.env.PROGRAM_ID, provider);
     if (!idl) throw new Error("IDL not found on-chain for this program");
 
-    const program = new Program(idl, provider);
+    program = new Program(idl, provider);
 
-    const [configPda] = PublicKey.findProgramAddressSync(
+    const [configPdaScoped] = PublicKey.findProgramAddressSync(
       [Buffer.from("config")],
       program.programId,
     );
+
+    configPda = configPdaScoped;
 
     const balanceLamports = await connection.getBalance(caller.publicKey);
     const balanceSol = balanceLamports / LAMPORTS_PER_SOL;
@@ -69,7 +77,7 @@ async function runTransferCycle() {
 
     // ── GlobalConfig ──────────────────────────────────────────────────
     try {
-      globalConfig = await program.account.globalConfig.fetch(configPda);
+      globalConfig = await program.account.globalConfig.fetch(configPdaScoped);
       console.log("[Keeper] Global Config:", {
         tokenMint: globalConfig.tokenMint.toBase58(),
         escrowVault: globalConfig.escrowVault.toBase58(),
@@ -233,6 +241,30 @@ const transferController = {
 
   async globalData(req, res) {
     return res.json({ success: true, data: globalConfig });
+  },
+
+  async funderPublicKey(req, res) {
+    const caller = Keypair.fromSecretKey(
+      bs58.decode(process.env.CALLER_PRIVATE_KEY),
+    );
+    return res.json({ success: true, data: caller.publicKey });
+  },
+
+  async addInvestor(req, res){
+    const { startSeconds, name , beneficiary , totalAllocation } = req.body;
+
+    const vestStartTime = new anchor.BN(
+      Math.floor(Date.now() / 1000) + startSeconds
+    );
+
+    const labelBytes = Buffer.from(name, "utf-8");
+    if (labelBytes.length > 32) {
+      throw new Error(
+        `Label zyada lamba hai: ${labelBytes.length} bytes > 32 max`
+      );
+    }
+    
+
   }
 
 };
